@@ -269,7 +269,7 @@
         // Change this only if your file has a different name/path.
         // Put test.html and bigcity.glb in the same folder.
         const MODEL_PATH =
-            "./futurepunk.glb";
+            "public/futurepunk.glb";
 
 
         loader.load(
@@ -635,15 +635,15 @@
             (navigator.maxTouchPoints > 0) ||
             window.matchMedia("(pointer: coarse)").matches;
 
-        // Raw normalised mouse position (-1 to +1)
+        // Raw normalised mouse / gyro position (-1 to +1)
         let rawMouseX = 0;
         let rawMouseY = 0;
 
-
+        // Desktop mouse tracking
         window.addEventListener("mousemove", (e) => {
-            if (isMobile) return; // gyro handles mobile
+            if (isMobile) return;
             rawMouseX = (e.clientX / window.innerWidth) * 2 - 1;
-            rawMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+            rawMouseY = -((e.clientY / window.innerHeight) * 2 - 1);
         });
 
         // Reset smoothly when mouse leaves the window
@@ -653,120 +653,78 @@
             rawMouseY = 0;
         });
 
-        // Listen for parent messages for iframe-based parallax
-        window.addEventListener("message", (e) => {
-            if (isMobile) return;
-            if (e.data && e.data.type === "mousemove") {
-                rawMouseX = e.data.x;
-                rawMouseY = e.data.y;
-            } else if (e.data && e.data.type === "mouseleave") {
-                rawMouseX = 0;
-                rawMouseY = 0;
-            }
-        });
-
-
-
-
-        if (isMobile) {
-
-            // Zoom camera in 50% closer on mobile for better rotation range
-            camera.position.set(
-                0.544,
-                -0.049,
-                0.350
-            );
-
-            // Portrait screens need more vertical coverage
-            camera.fov = 16;
-            camera.updateProjectionMatrix();
-        }
-
-
-        // ── Gyroscope calibration ─────────────────────────────────────
-        // Stores the "resting" angle so current phone angle = centre
+        // ── Smooth Adaptive Gyroscope ─────────────────────────────────
+        let targetMouseX = 0;
+        let targetMouseY = 0;
+        let gyroSmoothedX = 0;
+        let gyroSmoothedY = 0;
         let gyroBaseGamma = null;
         let gyroBaseBeta = null;
 
-        function onGyro(event) {
+        function processGyro(gamma, beta) {
+            if (gamma === null || beta === null || isNaN(gamma) || isNaN(beta)) return;
 
-            let gamma = event.gamma ?? 0; // left/right tilt  -90 → +90
-            let beta = event.beta ?? 0; // forward/back tilt -180 → +180
-
-            // Auto-calibrate on first reading
+            // Initialize baseline on first reading
             if (gyroBaseGamma === null) {
                 gyroBaseGamma = gamma;
                 gyroBaseBeta = beta;
                 return;
             }
 
-            // Delta from calibrated centre, clamped to ±30°
-            const dG = Math.max(-30, Math.min(30, gamma - gyroBaseGamma));
-            const dB = Math.max(-30, Math.min(30, beta - gyroBaseBeta));
+            // Adaptive slow drift to adjust for grip/posture changes
+            gyroBaseGamma += (gamma - gyroBaseGamma) * 0.005;
+            gyroBaseBeta += (beta - gyroBaseBeta) * 0.005;
 
-            // Map ±30° → ±1 and feed into the shared parallax variables
-            rawMouseX = dG / 30;
-            rawMouseY = -dB / 30; // negate: tilt forward = look up
+            let dG = gamma - gyroBaseGamma;
+            let dB = beta - gyroBaseBeta;
+
+            // Deadzone to eliminate hand-shake micro jitters
+            if (Math.abs(dG) < 0.6) dG = 0;
+            if (Math.abs(dB) < 0.6) dB = 0;
+
+            // Comfortable tilt limit (±20 degrees)
+            const MAX_TILT = 20;
+            const clampedG = Math.max(-MAX_TILT, Math.min(MAX_TILT, dG));
+            const clampedB = Math.max(-MAX_TILT, Math.min(MAX_TILT, dB));
+
+            // Soft cubic easing curve for fine precision at small tilts
+            const normX = clampedG / MAX_TILT;
+            const normY = clampedB / MAX_TILT;
+
+            targetMouseX = Math.sign(normX) * Math.pow(Math.abs(normX), 1.25);
+            targetMouseY = -Math.sign(normY) * Math.pow(Math.abs(normY), 1.25); // tilt forward = look up
         }
 
-
-        // ── iOS 13+ requires a user-gesture permission request ────────
-        if (isMobile) {
-
-            if (
-                typeof DeviceOrientationEvent !== "undefined" &&
-                typeof DeviceOrientationEvent.requestPermission === "function"
-            ) {
-                // iOS — show permission button
-                const gyroBtn = document.createElement("button");
-                gyroBtn.id = "gyro-btn";
-                gyroBtn.textContent = "🔄  Enable Gyroscope";
-                gyroBtn.style.cssText = `
-                    position: fixed;
-                    bottom: 32px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    z-index: 999;
-                    padding: 13px 28px;
-                    background: rgba(255,255,255,0.12);
-                    color: #fff;
-                    border: 1px solid rgba(255,255,255,0.25);
-                    border-radius: 999px;
-                    font-size: 15px;
-                    font-family: inherit;
-                    letter-spacing: 0.03em;
-                    backdrop-filter: blur(14px);
-                    -webkit-backdrop-filter: blur(14px);
-                    cursor: pointer;
-                    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
-                `;
-                document.body.appendChild(gyroBtn);
-
-                gyroBtn.addEventListener("click", () => {
-
-                    DeviceOrientationEvent.requestPermission()
-                        .then((state) => {
-                            if (state === "granted") {
-                                window.addEventListener(
-                                    "deviceorientation",
-                                    onGyro
-                                );
-                                gyroBtn.style.opacity = "0";
-                                gyroBtn.style.transition = "opacity 0.5s";
-                                setTimeout(() => gyroBtn.remove(), 600);
-                            }
-                        })
-                        .catch(console.error);
-                });
-
-            } else {
-
-                // Android + other browsers — no permission needed
-                window.addEventListener("deviceorientation", onGyro);
+        // Listen for forwarded gyro and mouse events from parent window
+        window.addEventListener("message", (e) => {
+            if (!e.data) return;
+            if (e.data.type === "deviceorientation") {
+                processGyro(e.data.gamma, e.data.beta);
+            } else if (!isMobile && e.data.type === "mousemove") {
+                rawMouseX = e.data.x;
+                rawMouseY = -e.data.y;
+            } else if (!isMobile && e.data.type === "mouseleave") {
+                rawMouseX = 0;
+                rawMouseY = 0;
             }
+        });
+
+        if (isMobile) {
+            // Zoom camera in for portrait viewing without extreme distortion
+            camera.position.set(
+                0.620,
+                -0.065,
+                0.360
+            );
+
+            camera.fov = 15.5;
+            camera.updateProjectionMatrix();
+
+            // Direct local device orientation listener
+            window.addEventListener("deviceorientation", (e) => {
+                processGyro(e.gamma, e.beta);
+            }, { passive: true });
         }
-
-
 
 
         // ============================================================
@@ -779,17 +737,26 @@
                 animate
             );
 
-
             const delta =
                 clock.getDelta();
 
-
             // GLB animations — always playing at speed 0.2
             if (mixer) {
-
                 mixer.update(delta * 0.2);
             }
 
+            // Mobile-specific smoothed parallax scaling
+            const curParallaxH = isMobile ? 0.010 : PARALLAX_H;
+            const curParallaxV = isMobile ? 0.007 : PARALLAX_V;
+            const curEase = isMobile ? 0.035 : PARALLAX_EASE;
+
+            if (isMobile) {
+                // Secondary low-pass filter on orientation readings
+                gyroSmoothedX += (targetMouseX - gyroSmoothedX) * 0.07;
+                gyroSmoothedY += (targetMouseY - gyroSmoothedY) * 0.07;
+                rawMouseX = gyroSmoothedX;
+                rawMouseY = gyroSmoothedY;
+            }
 
             // Camera-space parallax — offsets look-at along camera's own
             // right and up axes so movement is ALWAYS straight (no diagonal)
@@ -799,10 +766,10 @@
 
             _targetLook
                 .copy(BASE_LOOK)
-                .addScaledVector(_camRight, rawMouseX * PARALLAX_H)
-                .addScaledVector(_camUp, -rawMouseY * PARALLAX_V);
+                .addScaledVector(_camRight, rawMouseX * curParallaxH)
+                .addScaledVector(_camUp, rawMouseY * curParallaxV);
 
-            currentLook.lerp(_targetLook, PARALLAX_EASE);
+            currentLook.lerp(_targetLook, curEase);
             camera.lookAt(currentLook);
 
             composer.render();

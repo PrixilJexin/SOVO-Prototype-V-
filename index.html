@@ -1369,7 +1369,7 @@
 
 
                     <div class="mod-scroll__intro bg-white">
-                        <iframe src="background.html" class="hero-bg-iframe" id="hero-bg-iframe"></iframe>
+                        <iframe src="background.html" class="hero-bg-iframe" id="hero-bg-iframe" allow="accelerometer; gyroscope"></iframe>
                         <div class="wrapper">
 
                             <ul id="menu-principal-1" class="mod-scroll__intro__menu f-izmir t-parrafo t-upper">
@@ -2569,7 +2569,7 @@ before-bg-blue">
                 });
             }
 
-            // 3. Post Message Mouse Coordinates to background.html iframe
+            // 3. Post Message Mouse Coordinates & Gyroscope to background.html iframe
             const iframe = document.getElementById('hero-bg-iframe');
             if (iframe) {
                 window.addEventListener('mousemove', (e) => {
@@ -2577,11 +2577,39 @@ before-bg-blue">
                     const y = (e.clientY / window.innerHeight) * 2 - 1;
 
                     iframe.contentWindow.postMessage({ type: 'mousemove', x, y }, '*');
-                });
+                }, { passive: true });
 
                 window.addEventListener('mouseleave', () => {
                     iframe.contentWindow.postMessage({ type: 'mouseleave' }, '*');
                 });
+
+                function forwardOrientation(e) {
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'deviceorientation',
+                            gamma: e.gamma,
+                            beta: e.beta
+                        }, '*');
+                    }
+                }
+
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', forwardOrientation, { passive: true });
+
+                    // iOS 13+ user gesture activation on first touch
+                    let gyroRequested = false;
+                    window.addEventListener('touchstart', () => {
+                        if (gyroRequested) return;
+                        gyroRequested = true;
+                        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                            DeviceOrientationEvent.requestPermission().then(state => {
+                                if (state === 'granted') {
+                                    window.addEventListener('deviceorientation', forwardOrientation, { passive: true });
+                                }
+                            }).catch(() => {});
+                        }
+                    }, { once: true, passive: true });
+                }
             }
         })();
     </script>
