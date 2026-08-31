@@ -748,6 +748,8 @@
         }
     </style>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800;900&family=Syne:wght@700;800;900&display=swap');
+
         @font-face {
             font-family: 'Orbitron';
             src: url('./orbitron-light.ttf') format('truetype');
@@ -1002,172 +1004,202 @@
             text-transform: uppercase;
         }
 
-        /* Layout text rules for Hero Section (outside main card) */
-        .mod-scroll__intro__menu a,
-        .mod-scroll__intro__section,
-        .mod-scroll__intro__copyright {
-            mix-blend-mode: difference !important;
-            color: #ffffff !important;
+        /* Complete Removal of Global Header / Navbar */
+        header, .header {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
         }
 
-        /* Hero content container */
+        /* Fullscreen Hero Section */
+        .mod-scroll__intro {
+            position: relative !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        /* Pure Thermal Reactive Text Layer - Exact Mathematical Optical Inversion */
         .mod-scroll__intro__content {
             position: absolute !important;
-            top: 50% !important;
-            left: 6vw !important;
-            transform: translateY(-50%) !important;
-            width: auto !important;
-            max-width: 620px !important;
-            background: transparent !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            padding: 0 !important;
-            border-radius: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            text-align: left !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            padding: 5vh 6vw !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            align-items: flex-start !important;
+            z-index: 10 !important;
+            pointer-events: none !important;
+            mix-blend-mode: difference !important;
+            color: #ffffff !important;
+            user-select: none !important;
+        }
+
+        .hero-thermal-container {
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+        }
+
+        /* Top HUD Bar */
+        .hero-thermal-hud {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-size: clamp(0.72rem, 0.95vw, 0.9rem) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.28em !important;
+            text-transform: uppercase !important;
+            opacity: 0.9 !important;
+        }
+
+        .hero-thermal-hud .hud-live {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.6rem !important;
+        }
+
+        .hero-thermal-hud .hud-live::before {
+            content: "" !important;
+            display: inline-block !important;
+            width: 8px !important;
+            height: 8px !important;
+            background: #ffffff !important;
+            border-radius: 50% !important;
+            animation: thermalPulse 1.4s ease-in-out infinite alternate !important;
+        }
+
+        @keyframes thermalPulse {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* Center Headline Wrap */
+        .hero-thermal-headline-wrap {
             display: flex !important;
             flex-direction: column !important;
             align-items: flex-start !important;
-            justify-content: center !important;
-            gap: 1.75rem;
-            z-index: 5 !important;
-            pointer-events: auto !important;
+            gap: 1.5rem !important;
+            margin: auto 0 !important;
         }
 
-        .mod-scroll__intro__wrap-titles {
-            text-align: left !important;
-            width: 100% !important;
-            display: flex;
-            flex-direction: column;
-            gap: 1.1rem;
-        }
-
-        /* Eyebrow label above the title */
-        .mod-scroll__intro__wrap-titles::before {
-            content: "DIGITAL STUDIO";
-            display: block;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.7rem;
-            font-weight: 500;
-            letter-spacing: 0.45em;
-            color: rgba(255, 255, 255, 0.65);
-            text-transform: uppercase;
-        }
-
-        /* Eyebrow accent line */
-        .mod-scroll__intro__wrap-titles::after {
-            content: "";
-            display: block;
-            width: 46px;
-            height: 2px;
-            background: linear-gradient(90deg, #ff2d95, #ff9d3d);
-            margin-top: -0.6rem;
-            box-shadow: 0 0 12px rgba(255, 45, 149, 0.7);
-        }
-
-        /* Big, tight, gradient-filled title */
-        .mod-scroll__intro__title {
-            font-family: var(--f-medium);
-            font-size: clamp(3.2rem, 7vw, 6.4rem) !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.01em !important;
+        .hero-thermal-eyebrow {
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-size: clamp(0.78rem, 1.1vw, 1.1rem) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.4em !important;
             text-transform: uppercase !important;
-            text-align: left !important;
-            line-height: 0.92 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            opacity: 0.85 !important;
+        }
+
+        .hero-thermal-eyebrow::after {
+            content: "" !important;
+            display: inline-block !important;
+            width: 48px !important;
+            height: 2px !important;
+            background: #ffffff !important;
+        }
+
+        /* Huge Modern Display Headline in All Caps */
+        .hero-thermal-title {
+            font-family: 'Syne', 'Space Grotesk', -apple-system, sans-serif !important;
+            font-size: clamp(4.5rem, 14vw, 13rem) !important;
+            font-weight: 900 !important;
+            line-height: 0.82 !important;
+            letter-spacing: -0.045em !important;
+            text-transform: uppercase !important;
             margin: 0 !important;
-
-            background: linear-gradient(
-                105deg,
-                #ffffff 0%,
-                #ffe9f5 35%,
-                #ffb3dd 55%,
-                #ffcf8f 100%
-            );
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-
-            filter: drop-shadow(0 0 26px rgba(255, 45, 149, 0.35))
-                    drop-shadow(0 0 55px rgba(255, 157, 61, 0.2));
-        }
-
-        .mod-scroll__intro__text {
+            color: #ffffff !important;
             text-align: left !important;
-            max-width: 460px !important;
         }
 
-        /* Clean sentence-case body copy, not shouty caps */
-        .mod-scroll__intro__text p {
-            font-family: var(--f-izmir, inherit);
-            font-size: clamp(0.95rem, 1.1vw, 1.05rem) !important;
-            line-height: 1.7 !important;
-            font-weight: 400 !important;
-            letter-spacing: 0.01em !important;
-            color: rgba(255, 255, 255, 0.78) !important;
-            text-transform: none !important;
-            text-align: left !important;
-            margin: 0 !important;
-            padding-left: 1.1rem;
-            border-left: 1px solid rgba(255, 255, 255, 0.25);
+        /* Bottom Section */
+        .hero-thermal-bottom {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-end !important;
+            width: 100% !important;
+            gap: 2rem !important;
         }
 
-        /* Responsive Mobile Styles */
+        .hero-thermal-desc {
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-size: clamp(0.85rem, 1.2vw, 1.15rem) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.12em !important;
+            line-height: 1.5 !important;
+            text-transform: uppercase !important;
+            max-width: 620px !important;
+            border-left: 2px solid #ffffff !important;
+            padding-left: 1.25rem !important;
+        }
+
+        .hero-thermal-badges {
+            display: flex !important;
+            gap: 1.5rem !important;
+            font-family: 'Space Grotesk', sans-serif !important;
+            font-size: clamp(0.72rem, 0.9vw, 0.9rem) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.22em !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+            opacity: 0.9 !important;
+        }
+
+        /* Responsive Mobile Layout */
         @media (max-width: 768px) {
             .mod-scroll__intro__content {
-                left: 1.5rem !important;
-                right: 1.5rem !important;
-                max-width: calc(100vw - 3rem) !important;
-                width: calc(100vw - 3rem) !important;
-                gap: 1.25rem !important;
-                top: 48% !important;
+                padding: 4vh 5vw !important;
             }
 
-            .mod-scroll__intro__wrap-titles {
-                gap: 0.8rem;
+            .hero-thermal-hud .hud-coords {
+                display: none !important;
             }
 
-            .mod-scroll__intro__wrap-titles::before {
-                font-size: 0.62rem;
-                letter-spacing: 0.32em;
+            .hero-thermal-title {
+                font-size: clamp(3.8rem, 18vw, 6.5rem) !important;
+                line-height: 0.86 !important;
             }
 
-            .mod-scroll__intro__wrap-titles::after {
-                width: 36px;
-                margin-top: -0.4rem;
+            .hero-thermal-eyebrow {
+                font-size: 0.72rem !important;
+                letter-spacing: 0.25em !important;
             }
 
-            .mod-scroll__intro__title {
-                font-size: clamp(2.4rem, 11vw, 3.8rem) !important;
-                line-height: 0.95 !important;
+            .hero-thermal-eyebrow::after {
+                width: 28px !important;
             }
 
-            .mod-scroll__intro__text {
+            .hero-thermal-bottom {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 1.2rem !important;
+            }
+
+            .hero-thermal-desc {
+                font-size: 0.8rem !important;
+                line-height: 1.45 !important;
+                padding-left: 0.9rem !important;
                 max-width: 100% !important;
             }
 
-            .mod-scroll__intro__text p {
-                font-size: 0.92rem !important;
-                line-height: 1.55 !important;
-                padding-left: 0.85rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .mod-scroll__intro__content {
-                left: 1.25rem !important;
-                right: 1.25rem !important;
-                max-width: calc(100vw - 2.5rem) !important;
-                width: calc(100vw - 2.5rem) !important;
-                gap: 1rem !important;
-            }
-
-            .mod-scroll__intro__title {
-                font-size: clamp(2.1rem, 12vw, 3.2rem) !important;
-            }
-
-            .mod-scroll__intro__text p {
-                font-size: 0.88rem !important;
+            .hero-thermal-badges {
+                gap: 0.8rem !important;
+                font-size: 0.68rem !important;
+                letter-spacing: 0.15em !important;
             }
         }
     </style>
@@ -1370,50 +1402,31 @@
 
                     <div class="mod-scroll__intro bg-white">
                         <iframe src="background.html" class="hero-bg-iframe" id="hero-bg-iframe" allow="accelerometer; gyroscope"></iframe>
-                        <div class="wrapper">
+                        <div class="mod-scroll__intro__content">
+                            <div class="hero-thermal-container">
+                                <div class="hero-thermal-hud">
+                                    <span class="hud-item hud-live">[ SYS // 01 OPERATIONAL ]</span>
+                                    <span class="hud-item hud-coords">35°41'22"N 139°41'30"E</span>
+                                    <span class="hud-item">[ TOKYO // ARCHIVE ]</span>
+                                </div>
 
-                            <ul id="menu-principal-1" class="mod-scroll__intro__menu f-izmir t-parrafo t-upper">
-                                <li
-                                    class="link menu-item menu-item-type-post_type menu-item-object-page menu-item-1411">
-                                    <a href="https://normalisboring.es/conocenos/">Conócenos</a>
-                                </li>
-                                <li
-                                    class="no-show link menu-item menu-item-type-post_type menu-item-object-page menu-item-1412">
-                                    <a href="https://normalisboring.es/proyectos/">Proyectos</a>
-                                </li>
-                                <li class="link menu-item menu-item-type-custom menu-item-object-custom menu-item-1088">
-                                    <a href="http://contacto">Contacto</a>
-                                </li>
-                                <li
-                                    class="no-show-scroll link menu-item menu-item-type-custom menu-item-object-custom menu-item-1089">
-                                    <a href="http://disponibilidad">Disponibilidad</a>
-                                </li>
-                            </ul>
-                            <div class="mod-scroll__intro__section mod-scroll__section t-parrafo-l f-edit">Home</div>
-                            <div class="mod-scroll__intro__copyright t-subtitulo f-izmir">Normal is boring ©2025</div>
-
-                            <div class="mod-scroll__intro__content">
-                                <div class="mod-scroll__intro__wrap-titles">
-                                    <div class="mod-scroll__intro__title f-izmir t-titulo-xxl line lh-less is_home">
+                                <div class="hero-thermal-headline-wrap">
+                                    <div class="hero-thermal-eyebrow">SYNTHETIC ARCHITECTURE LAB</div>
+                                    <h1 class="hero-thermal-title">
                                         SOVO<br>STUDIOS
-                                    </div>
+                                    </h1>
                                 </div>
-                                <div class="mod-scroll__intro__text">
-                                    <p>Creating high-end digital spaces and responsive visual systems. Designed for
-                                        immersive environments and next-generation interactive experiences.</p>
-                                </div>
-                            </div>
 
-                            <div class="mod-scroll__intro__logo logo c-black">
-                                <!-- <a href="https://normalisboring.es">&nbsp;</a> -->
-                                <div class="logo__normal link" data-url="https://normalisboring.es">SOVO</div>
-                                <div class="logo__group">
-                                    <div class="logo__is"></div>
-                                    <div class="logo__boring">Socienty of<br> visual originators<div class="reg">®</div>
+                                <div class="hero-thermal-bottom">
+                                    <div class="hero-thermal-desc">
+                                        CREATING HIGH-END DIGITAL SPACES AND RESPONSIVE VISUAL SYSTEMS. DESIGNED FOR IMMERSIVE ENVIRONMENTS & NEXT-GEN SPATIAL EXPERIENCES.
+                                    </div>
+                                    <div class="hero-thermal-badges">
+                                        <span class="badge">[ 2026 EDITION ]</span>
+                                        <span class="badge">[ SPATIAL ENGINE ACTIVE ]</span>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
