@@ -268,103 +268,72 @@
 
         // Change this only if your file has a different name/path.
         // Put test.html and bigcity.glb in the same folder.
-        const MODEL_PATH =
-            "public/futurepunk.glb";
+        function onModelReady(gltf) {
+            model = gltf.scene;
+            modelGroup.add(model);
 
+            const loadingEl = document.getElementById("loading");
+            if (loadingEl) loadingEl.style.display = "none";
+
+            // Enable shadows, anisotropy, alphaTest per Sketchfab settings
+            model.traverse((object) => {
+                if (!object.isMesh) return;
+                object.castShadow = true;
+                object.receiveShadow = true;
+                const mat = object.material;
+                if (!mat) return;
+                if (mat.transparent || mat.opacity < 1) {
+                    mat.alphaTest = 0.00001;
+                }
+                mat.needsUpdate = true;
+                const maxAniso = renderer.capabilities.getMaxAnisotropy();
+                const texSlots = [
+                    "map", "normalMap", "roughnessMap", "metalnessMap",
+                    "aoMap", "emissiveMap", "alphaMap", "envMap"
+                ];
+                texSlots.forEach(slot => {
+                    if (mat[slot]) {
+                        mat[slot].anisotropy = maxAniso;
+                        mat[slot].needsUpdate = true;
+                    }
+                });
+            });
+
+            applyHardcodedSettings();
+            setupAnimations(gltf.animations);
+            console.log("Model loaded successfully:", model);
+        }
+
+        const MODEL_PATH = "./futurepunk.glb";
 
         loader.load(
-
             MODEL_PATH,
-
-            (gltf) => {
-
-                model = gltf.scene;
-
-                modelGroup.add(model);
-
-                document.getElementById(
-                    "loading"
-                ).style.display = "none";
-
-
-                // Enable shadows, anisotropy, alphaTest per Sketchfab settings
-                model.traverse(
-                    (object) => {
-
-                        if (!object.isMesh) return;
-
-                        object.castShadow = true;
-                        object.receiveShadow = true;
-
-                        const mat = object.material;
-
-                        if (!mat) return;
-
-                        // epsilonAlpha: 0.00001
-                        if (mat.transparent || mat.opacity < 1) {
-                            mat.alphaTest = 0.00001;
-                        }
-
-                        mat.needsUpdate = true;
-
-                        // anisotropy: true — apply max anisotropy to every texture slot
-                        const maxAniso = renderer.capabilities.getMaxAnisotropy();
-
-                        const texSlots = [
-                            "map", "normalMap", "roughnessMap", "metalnessMap",
-                            "aoMap", "emissiveMap", "alphaMap", "envMap"
-                        ];
-
-                        texSlots.forEach(slot => {
-
-                            if (mat[slot]) {
-
-                                mat[slot].anisotropy = maxAniso;
-                                mat[slot].needsUpdate = true;
-                            }
-                        });
-                    }
-                );
-
-
-                applyHardcodedSettings();
-
-                setupAnimations(gltf.animations);
-
-                console.log(
-                    "Model loaded:",
-                    model
-                );
-            },
-
+            onModelReady,
             (progress) => {
-
                 if (progress.total) {
-
-                    const percent =
-                        Math.round(
-                            progress.loaded /
-                            progress.total *
-                            100
-                        );
-
-                    document.getElementById(
-                        "loading"
-                    ).textContent =
-                        `Loading bigcity.glb... ${percent}%`;
+                    const percent = Math.round(progress.loaded / progress.total * 100);
+                    const el = document.getElementById("loading");
+                    if (el) el.textContent = `Loading futurepunk.glb... ${percent}%`;
                 }
             },
-
             (error) => {
-
-                console.error(error);
-
-                document.getElementById(
-                    "loading"
-                ).innerHTML = `
-            Failed to load bigcity.glb.<br><br>
-            Run this folder through a local server.
-        `;
+                console.warn("Could not load from ./futurepunk.glb, retrying with public/futurepunk.glb...", error);
+                loader.load(
+                    "public/futurepunk.glb",
+                    onModelReady,
+                    (progress) => {
+                        if (progress.total) {
+                            const percent = Math.round(progress.loaded / progress.total * 100);
+                            const el = document.getElementById("loading");
+                            if (el) el.textContent = `Loading futurepunk.glb... ${percent}%`;
+                        }
+                    },
+                    (err2) => {
+                        console.error("Failed to load model from both paths:", err2);
+                        const el = document.getElementById("loading");
+                        if (el) el.innerHTML = "Failed to load model.<br><br>Check network & file path.";
+                    }
+                );
             }
         );
 
