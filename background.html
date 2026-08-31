@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SOVO GLB Visual Tester</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            background: #050505;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #050505;
+            color: white;
+            font-size: 14px;
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading">
+        Loading bigcity.glb...
+    </div>
+
+
+
+
+    <!-- THREE.JS -->
+    <script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+}
+</script>
+
+
+    <script type="module">
+
+        import * as THREE from "three";
+
+        import { GLTFLoader } from
+            "three/addons/loaders/GLTFLoader.js";
+
+        import { OrbitControls } from
+            "three/addons/controls/OrbitControls.js";
+
+        import { EffectComposer } from
+            "three/addons/postprocessing/EffectComposer.js";
+
+
+        import { RenderPass } from
+            "three/addons/postprocessing/RenderPass.js";
+
+        import { UnrealBloomPass } from
+            "three/addons/postprocessing/UnrealBloomPass.js";
+
+
+
+
+        // ============================================================
+        // BASIC SETUP
+        // ============================================================
+
+        const scene = new THREE.Scene();
+
+        // Background from saved settings
+        scene.background = new THREE.Color("#3900a3");
+
+        // Fog disabled
+        scene.fog = null;
+
+
+        const camera = new THREE.PerspectiveCamera(
+            12.2,
+            window.innerWidth / window.innerHeight,
+            0.01,
+            5000
+        );
+
+        camera.position.set(
+            0.953565,
+            -0.105253,
+            0.383599
+        );
+
+
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,     // supersample: true
+            alpha: false,        // transparent: false
+            powerPreference: "high-performance"  // powerPreference
+        });
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio, 1.5) // maxDevicePixelRatio: 1.5
+        );
+
+        renderer.outputColorSpace =
+            THREE.SRGBColorSpace;
+
+        renderer.toneMapping =
+            THREE.ACESFilmicToneMapping;
+
+        renderer.toneMappingExposure = 1;
+
+        renderer.shadowMap.enabled = true;
+
+        renderer.shadowMap.type =
+            THREE.PCFSoftShadowMap;
+
+        document.body.appendChild(
+            renderer.domElement
+        );
+
+
+        // Camera locked — no mouse interaction
+        const controls = new OrbitControls(
+            camera,
+            renderer.domElement
+        );
+
+        controls.enabled = false;
+        controls.enablePan = false;
+        controls.enableRotate = false;
+
+        controls.target.set(
+            0.134665,
+            0.007797,
+            0.316149
+        );
+
+        controls.update();
+
+
+        // ============================================================
+        // LIGHTING
+        // ============================================================
+
+        const ambientLight =
+            new THREE.AmbientLight(
+                0xffffff,
+                0
+            );
+
+        scene.add(ambientLight);
+
+
+        const directionalLight =
+            new THREE.DirectionalLight(
+                0xffffff,
+                0
+            );
+
+        directionalLight.position.set(
+            -50,
+            10,
+            5
+        );
+
+        directionalLight.castShadow = true;
+
+        // shadowTextureSize: 1024
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.01;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.bias = -0.0001;
+
+        scene.add(directionalLight);
+
+
+        const pointLight =
+            new THREE.PointLight(
+                0xffffff,
+                0,
+                100
+            );
+
+        pointLight.position.set(
+            0,
+            5,
+            0
+        );
+
+        scene.add(pointLight);
+
+
+        // ============================================================
+        // BLOOM / GLOW
+        // ============================================================
+
+        const composer =
+            new EffectComposer(renderer);
+
+
+        const renderPass =
+            new RenderPass(
+                scene,
+                camera
+            );
+
+        composer.addPass(
+            renderPass
+        );
+
+
+        const bloomPass =
+            new UnrealBloomPass(
+                new THREE.Vector2(
+                    window.innerWidth,
+                    window.innerHeight
+                ),
+                1.25,
+                0.69,
+                0.9
+            );
+
+        composer.addPass(
+            bloomPass
+        );
+
+
+        // ============================================================
+        // MODEL
+        // ============================================================
+
+        let model = null;
+
+        const modelGroup =
+            new THREE.Group();
+
+        scene.add(modelGroup);
+
+
+        const loader =
+            new GLTFLoader();
+
+
+        // Change this only if your file has a different name/path.
+        // Put test.html and bigcity.glb in the same folder.
+        const MODEL_PATH =
+            "./futurepunk.glb";
+
+
+        loader.load(
+
+            MODEL_PATH,
+
+            (gltf) => {
+
+                model = gltf.scene;
+
+                modelGroup.add(model);
+
+                document.getElementById(
+                    "loading"
+                ).style.display = "none";
+
+
+                // Enable shadows, anisotropy, alphaTest per Sketchfab settings
+                model.traverse(
+                    (object) => {
+
+                        if (!object.isMesh) return;
+
+                        object.castShadow = true;
+                        object.receiveShadow = true;
+
+                        const mat = object.material;
+
+                        if (!mat) return;
+
+                        // epsilonAlpha: 0.00001
+                        if (mat.transparent || mat.opacity < 1) {
+                            mat.alphaTest = 0.00001;
+                        }
+
+                        mat.needsUpdate = true;
+
+                        // anisotropy: true — apply max anisotropy to every texture slot
+                        const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+                        const texSlots = [
+                            "map", "normalMap", "roughnessMap", "metalnessMap",
+                            "aoMap", "emissiveMap", "alphaMap", "envMap"
+                        ];
+
+                        texSlots.forEach(slot => {
+
+                            if (mat[slot]) {
+
+                                mat[slot].anisotropy = maxAniso;
+                                mat[slot].needsUpdate = true;
+                            }
+                        });
+                    }
+                );
+
+
+                applyHardcodedSettings();
+
+                setupAnimations(gltf.animations);
+
+                console.log(
+                    "Model loaded:",
+                    model
+                );
+            },
+
+            (progress) => {
+
+                if (progress.total) {
+
+                    const percent =
+                        Math.round(
+                            progress.loaded /
+                            progress.total *
+                            100
+                        );
+
+                    document.getElementById(
+                        "loading"
+                    ).textContent =
+                        `Loading bigcity.glb... ${percent}%`;
+                }
+            },
+
+            (error) => {
+
+                console.error(error);
+
+                document.getElementById(
+                    "loading"
+                ).innerHTML = `
+            Failed to load bigcity.glb.<br><br>
+            Run this folder through a local server.
+        `;
+            }
+        );
+
+
+        // ============================================================
+        // CENTER MODEL
+        // ============================================================
+
+        // ============================================================
+        // HARDCODED SETTINGS — applied once after model loads
+        // ============================================================
+
+        // Material overrides keyed by UUID
+        const MATERIAL_OVERRIDES = {
+            "fbb5280e-9856-46b0-bc45-df9fa3da06a3": { color: 16711680, emissive: 0, emissiveIntensity: 1.98, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "2184473f-7176-4aeb-82aa-5c9dc7b656eb": { color: 0, emissive: 16771818, emissiveIntensity: 6.163772753501547, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "1c1c903a-daa1-4144-8df3-831c809dcd29": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "33210d8a-087c-44ba-a053-c49ef1c288dc": { color: 0, emissive: 16646073, emissiveIntensity: 2.13, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "19dce393-026f-46eb-a288-e062531131fd": { color: 0, emissive: 0, emissiveIntensity: 0, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "0c93c0b6-744e-4352-8dbd-5911388a90e4": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 0.4706616074186761, transparent: true },
+            "e5fdabcb-4fec-4924-b5ae-134cd0db967f": { color: 2697513, emissive: 3610368, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "3ce14b66-a67f-4591-9ade-1e4d2b49906f": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "e03d86b7-d691-4b91-979a-c6c99ed1c140": { color: 0, emissive: 0, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8df1dd14-bd3a-461b-bb91-9040f21530c5": { color: 9988692, emissive: 15724527, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: true },
+            "df1e00e8-e2cc-4c75-9b78-c51d4c352b32": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "5912a9f9-0cb2-48db-9fcc-8ef4105e481f": { color: 0, emissive: 384767, emissiveIntensity: 6.047200219156364, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "96c32d5c-d6d3-4dfa-b692-33d3021f1dcc": { color: 0, emissive: 5755647, emissiveIntensity: 8.320364638887431, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "fe2a6d4f-4949-4583-ab42-21b2136d2554": { color: 0, emissive: 633084, emissiveIntensity: 4.007180868115663, roughness: 0, metalness: 0, opacity: 0.25, transparent: false },
+            "dc81108b-1a77-4d21-b645-94a35e5c6c2b": { color: 0, emissive: 16777215, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "89ff0d68-e9fe-4c9c-b655-a3f540b4b707": { color: 0, emissive: 16546478, emissiveIntensity: 6.222059020674139, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "a75917b9-5198-430e-878e-9b81db167b4a": { color: 16777215, emissive: 0, emissiveIntensity: 1, roughness: 0.6, metalness: 0, opacity: 1, transparent: false },
+            "4fe858c7-b755-4b02-b66a-f613b9d5983d": { color: 16711842, emissive: 16777215, emissiveIntensity: 7.271211829780785, roughness: 1, metalness: 1, opacity: 0.0976294975140907, transparent: true },
+            "7bcc71ac-365c-4969-a58e-24fb86fe9d6e": { color: 0, emissive: 8453929, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "05e3f539-d6e7-4b34-81c0-527f3401b661": { color: 0, emissive: 1572715, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "a070c971-9e1d-4162-ac8e-6fc19cb66a0e": { color: 0, emissive: 1638136, emissiveIntensity: 7.679215699988925, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "78993674-1678-4d67-ae68-b4283d05c804": { color: 0, emissive: 1638136, emissiveIntensity: 7.68, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "99cf9817-d761-4934-9d99-8e29b51a69e8": { color: 0, emissive: 1638136, emissiveIntensity: 7.68, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "ed6944ea-c322-4f72-82d1-159d35fc8484": { color: 0, emissive: 1638136, emissiveIntensity: 7.68, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "b8304ee2-9072-43ac-8d6b-3b27547b2cb2": { color: 0, emissive: 1638136, emissiveIntensity: 7.68, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "0616b85f-c3e7-4b64-9fe6-09396d66a4c2": { color: 0, emissive: 1638136, emissiveIntensity: 9.660948783857036, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "e42a5139-f975-4648-a6cb-517c4648f33e": { color: 0, emissive: 1638136, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "c049ceec-58f5-4dc4-a12e-a5b917aa7cb9": { color: 0, emissive: 9218500, emissiveIntensity: 3.5408907307349313, roughness: 0, metalness: 0, opacity: 0.9894093852547401, transparent: true },
+            "93c6823c-9311-4e9f-a9ea-a59c1d3707ba": { color: 0, emissive: 0, emissiveIntensity: 2.258592852937919, roughness: 0, metalness: 0, opacity: 0.9602662516684444, transparent: true },
+            "05ae61d5-f70b-4db7-866d-d7cc678bdb11": { color: 3355443, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "677d221c-aeb2-4666-bbde-f4267fd1d5b7": { color: 0, emissive: 16702600, emissiveIntensity: 4.007180868115663, roughness: 0, metalness: 0, opacity: 0.3657463265080114, transparent: true },
+            "31a3e2bd-753e-4fc0-b132-f4e835ec9c63": { color: 4663557, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8f2c951f-c82f-426f-93df-8c877a39b834": { color: 0, emissive: 34033, emissiveIntensity: 5.697482616120816, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "47f385aa-6ef5-4d6d-8c5a-6266b00413b1": { color: 4662025, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "7268759e-b366-4463-a9c2-1394130a669e": { color: 0, emissive: 16755923, emissiveIntensity: 1.9088752499023705, roughness: 0, metalness: 0, opacity: 0.23, transparent: true },
+            "9788649d-5ab2-423e-9b2e-204d74d94641": { color: 0, emissive: 0, emissiveIntensity: 1.5591576468668218, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "9eb2f01f-fc0b-4350-8d58-4381e0cfe82e": { color: 3026478, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "ece7ec3e-226b-4247-bc5a-d51241fe481c": { color: 921102, emissive: 0, emissiveIntensity: 1, roughness: 0.5, metalness: 0, opacity: 1, transparent: false },
+            "f6d4f91b-0e62-4efa-a306-b05a54bf2f58": { color: 8290176, emissive: 0, emissiveIntensity: 1, roughness: 1, metalness: 1, opacity: 0.2491737921628285, transparent: true },
+            "ff99b372-caac-4175-b2db-d1028bbcff31": { color: 3355443, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "58819372-bd4d-4376-a7d5-f3465dd3cce3": { color: 0, emissive: 2970367, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "d9698916-ca1f-4e92-9a14-5bad55047300": { color: 0, emissive: 16777215, emissiveIntensity: 3.774035799425297, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "7b1a37a3-07be-4d1c-b290-00b7dfbfdb96": { color: 0, emissive: 15108456, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "a00894a2-8fd7-4551-a576-0cffe9b572e3": { color: 0, emissive: 16743593, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 0.1326012578176456, transparent: true },
+            "26764325-82ea-40f9-9660-7e62a289952b": { color: 0, emissive: 16777215, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "ed97314d-b9d7-4b6a-8b99-972490ac7494": { color: 0, emissive: 14515701, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "4e16df5c-9423-4a96-91b9-82183912dfc7": { color: 0, emissive: 63743, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "e68f42c9-921c-42f8-9615-d72b7eed027d": { color: 5395026, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "604cc177-f84e-4f39-b7e2-dd11efd7b543": { color: 0, emissive: 6732278, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "077f5d6b-eb37-48ce-9310-98e672b66d2e": { color: 0, emissive: 0, emissiveIntensity: 8.028933303024473, roughness: 0, metalness: 0, opacity: 0.999, transparent: false },
+            "3285ba3e-2390-49d2-8e4b-bd19a4dd9939": { color: 0, emissive: 14003056, emissiveIntensity: 6.222059020674139, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8f4d9a4f-2002-497a-971b-9b621704daf4": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "62596acf-7fcd-446b-b0bf-2c4ba962579f": { color: 5066061, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: true },
+            "ea084145-71b3-48ef-ba10-9c330b7e7709": { color: 0, emissive: 0, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8423fc96-7c08-49c7-80c4-57eeccb8c64c": { color: 3408016, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: true },
+            "77d20a72-ab3f-4bff-b913-0d51f40e2a58": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "f0b43fb6-05da-4c75-bde4-9737c95f71bf": { color: 0, emissive: 16768379, emissiveIntensity: 8.26207837171484, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "cb89e9e0-b9b5-4b27-851c-58a5003cc2da": { color: 4671303, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "5ac1529e-bcc0-4568-97e6-2a0139d1263e": { color: 4868682, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8c6cbd43-33bf-4e95-9522-dffaef8bfabe": { color: 0, emissive: 65331, emissiveIntensity: 4.007180868115663, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "44e371be-1a4c-4063-b200-b2428d98a5d8": { color: 5592405, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "aafdbb41-8299-4cab-8a5e-934b26d7615d": { color: 5592405, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "5cf0f8ca-62dd-489d-96f1-7fe43d6af553": { color: 0, emissive: 65508, emissiveIntensity: 4.881474875704535, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8bcb1a75-f2f0-4f56-abc3-eca665586ae1": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 0.25, transparent: true },
+            "2bd27522-663b-4e57-aa0b-bc4e017f97a2": { color: 14013909, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "66b8ce7a-5f5d-481d-8da0-a0eff87b3703": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "f0755ae9-ca40-41e0-be68-f3008f9b3bba": { color: 0, emissive: 3275519, emissiveIntensity: 3.89060833377048, roughness: 0, metalness: 0, opacity: 0.25, transparent: false },
+            "0f796553-e4de-4c8b-880a-07a0a62f1162": { color: 42939, emissive: 16777215, emissiveIntensity: 8.786654776268163, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "2ca8fcbf-ad2a-44d0-81f3-e4192c8dc982": { color: 11579568, emissive: 10658466, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 0.32584672925442487, transparent: true },
+            "705fee4e-211f-4d6f-aa45-1ec89359a5e5": { color: 0, emissive: 65463, emissiveIntensity: 2.6083104559734682, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "c2aeb111-da75-4463-b20d-fa3877660386": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "75494dab-7f24-4970-b2f3-2109fb792259": { color: 1118481, emissive: 0, emissiveIntensity: 1, roughness: 1, metalness: 0, opacity: 1, transparent: false },
+            "8b2fa8b3-3692-4a8e-b462-c6b4d0061f01": { color: 0, emissive: 11599732, emissiveIntensity: 4.356898471151212, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "c5b9dfe5-903f-4b4b-b02c-8109fea77106": { color: 0, emissive: 16777215, emissiveIntensity: 1.850588982729779, roughness: 0, metalness: 0, opacity: 0.709635302826301, transparent: true },
+            "ecc5b867-f3bd-4316-a5a6-0fa6f6893b91": { color: 0, emissive: 36095, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "bcd57840-65e5-478c-ac26-716e49225094": { color: 0, emissive: 13140734, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "8e2999a1-511b-4e19-b75f-da6fddf0128d": { color: 0, emissive: 9469265, emissiveIntensity: 9.48608998233926, roughness: 0, metalness: 0, opacity: 1, transparent: true },
+            "89022630-58bc-421a-9772-272fd9548d48": { color: 3815994, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "15aba235-9b7d-466d-9ba3-51c13c5d1b89": { color: 0, emissive: 9792832, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "641a2cc1-0661-4103-84c9-9c0808a0948f": { color: 4868682, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "c628515a-8e08-4f6b-8258-937351710c40": { color: 0, emissive: 16298751, emissiveIntensity: 4.2403259368060295, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "001933ca-5a7e-4d8c-9c14-38438aa9f40a": { color: 0, emissive: 15509351, emissiveIntensity: 6.804921692400053, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "cc6f51ab-2b2a-4f83-a990-58efd6970b96": { color: 6513507, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "786c912a-fcf5-44f7-a973-5ca0ad8cd36b": { color: 0, emissive: 16752876, emissiveIntensity: 8.028933303024473, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "17958d6c-3324-4e89-92d4-4aa000de23fd": { color: 0, emissive: 12951400, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "44b9a46f-1f98-48a3-9e80-39daf56fa106": { color: 8750469, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "9b9d1411-78ef-4869-af29-a0a59185acff": { color: 0, emissive: 16777215, emissiveIntensity: 4.356898471151212, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "d19860a5-3d65-480d-b3aa-f0dad542b8ea": { color: 0, emissive: 14917988, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "b9e98fda-98bf-4f19-a989-aaa174a84dbb": { color: 0, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 0.5289478745912676, transparent: true },
+            "de8123f2-eb50-45f5-a816-c9f296e94863": { color: 0, emissive: 65535, emissiveIntensity: 2.2003065857653277, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "50a5fa3b-e4a1-4845-818e-67b2224e337e": { color: 0, emissive: 16539528, emissiveIntensity: 3.0163143261816083, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "d1a8c003-a3d5-4cb7-a9bd-b51c7fd316b3": { color: 0, emissive: 16749761, emissiveIntensity: 8.378650906060024, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "9631c29e-6ea2-4894-9d5e-bbe49c4a1d0b": { color: 0, emissive: 8425471, emissiveIntensity: 7.154639295435602, roughness: 0, metalness: 0, opacity: 1, transparent: false },
+            "b0207986-e62d-4214-8355-11d7eb9ed4b4": { color: 0, emissive: 16423148, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 0.7271211829780785, transparent: true },
+            "0f859df5-18a0-4227-9d31-5fb9e1c33d97": { color: 0, emissive: 16777215, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 0.46483298070141693, transparent: true },
+            "2e1fd91f-1147-4abb-8440-d46cd5ebd309": { color: 6700827, emissive: 0, emissiveIntensity: 1, roughness: 0, metalness: 0, opacity: 0.30163143261816083, transparent: true },
+            "9f3c423d-41da-4f50-8c39-08e3b9b89133": { color: 0, emissive: 16777215, emissiveIntensity: 10, roughness: 0, metalness: 0, opacity: 0.5697482616120816, transparent: true },
+            "f7d54a87-b6ee-46a2-83b6-9b3785f83d68": { color: 16765440, emissive: 11334, emissiveIntensity: 1, roughness: 0.07431499064505412, metalness: 1, opacity: 1, transparent: false }
+        };
+
+        // Texture overrides keyed by UUID
+        const TEXTURE_OVERRIDES = {
+            "2ca8fcbf-ad2a-44d0-81f3-e4192c8dc982": { repeatX: 3.0000000000000027, repeatY: 8.348110103205059 }
+        };
+
+
+        function applyHardcodedSettings() {
+
+            if (!model) return;
+
+            // Model transform
+            model.scale.setScalar(10);
+            model.position.set(0, 0, 0);
+            model.rotation.set(0, 0, 0);
+
+            // Apply material overrides
+            model.traverse((object) => {
+
+                if (!object.isMesh || !object.material) return;
+
+                const mat = object.material;
+                const o = MATERIAL_OVERRIDES[mat.uuid];
+
+                if (!o) return;
+
+                if (mat.color && o.color !== undefined)
+                    mat.color.setHex(o.color);
+
+                if (mat.emissive && o.emissive !== undefined)
+                    mat.emissive.setHex(o.emissive);
+
+                if (o.emissiveIntensity !== undefined)
+                    mat.emissiveIntensity = o.emissiveIntensity;
+
+                if (o.roughness !== undefined)
+                    mat.roughness = o.roughness;
+
+                if (o.metalness !== undefined)
+                    mat.metalness = o.metalness;
+
+                if (o.opacity !== undefined)
+                    mat.opacity = o.opacity;
+
+                if (o.transparent !== undefined)
+                    mat.transparent = o.transparent;
+
+                mat.needsUpdate = true;
+
+                // Texture overrides
+                if (mat.map) {
+
+                    const t = TEXTURE_OVERRIDES[mat.uuid];
+
+                    if (t) {
+
+                        if (t.repeatX !== undefined) mat.map.repeat.x = t.repeatX;
+                        if (t.repeatY !== undefined) mat.map.repeat.y = t.repeatY;
+
+                        mat.map.needsUpdate = true;
+                    }
+                }
+            });
+        }
+
+
+
+
+
+        // ============================================================
+        // ANIMATION
+        // ============================================================
+
+
+
+
+
+        // ============================================================
+        // ANIMATION
+        // ============================================================
+
+        let mixer = null;
+
+        let clock =
+            new THREE.Clock();
+
+
+        let animationActions = [];
+
+
+
+
+
+
+
+        // ============================================================
+        // MODEL ANIMATION SETUP
+        // ============================================================
+
+        function setupAnimations(animations) {
+
+            if (!animations || animations.length === 0)
+                return;
+
+
+            mixer =
+                new THREE.AnimationMixer(
+                    model
+                );
+
+
+            animations.forEach(
+                clip => {
+
+                    const action =
+                        mixer.clipAction(
+                            clip
+                        );
+
+                    action.play();
+
+                    animationActions.push(
+                        action
+                    );
+                }
+            );
+        }
+
+
+        // ============================================================
+        // MOUSE PARALLAX — camera gently follows cursor
+        // ============================================================
+
+        // ── Parallax config ────────────────────────────────────────────
+        // BASE_LOOK is where the camera rests when cursor is centred
+        const BASE_LOOK = new THREE.Vector3(0.134665, 0.007797, 0.316149);
+
+        // How far the look-at drifts in camera-space units
+        // (camera right/up vectors, so drift is always perfectly horizontal/vertical)
+        const PARALLAX_H = 0.03;   // left / right swing
+        const PARALLAX_V = 0.02;  // up   / down  swing
+        const PARALLAX_EASE = 0.045;  // lerp speed (lower = more inertia)
+
+        // Smoothed look-at Vector3 (starts at rest position)
+        let currentLook = BASE_LOOK.clone();
+
+        // Reusable scratch vectors — allocated once, not per-frame
+        const _camRight = new THREE.Vector3();
+        const _camUp = new THREE.Vector3();
+        const _camFwd = new THREE.Vector3();
+        const _targetLook = new THREE.Vector3();
+
+        // Mobile detection — must be before the event listeners below
+        const isMobile = ("ontouchstart" in window) ||
+            (navigator.maxTouchPoints > 0) ||
+            window.matchMedia("(pointer: coarse)").matches;
+
+        // Raw normalised mouse position (-1 to +1)
+        let rawMouseX = 0;
+        let rawMouseY = 0;
+
+
+        window.addEventListener("mousemove", (e) => {
+            if (isMobile) return; // gyro handles mobile
+            rawMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            rawMouseY = (e.clientY / window.innerHeight) * 2 - 1;
+        });
+
+        // Reset smoothly when mouse leaves the window
+        window.addEventListener("mouseleave", () => {
+            if (isMobile) return;
+            rawMouseX = 0;
+            rawMouseY = 0;
+        });
+
+        // Listen for parent messages for iframe-based parallax
+        window.addEventListener("message", (e) => {
+            if (isMobile) return;
+            if (e.data && e.data.type === "mousemove") {
+                rawMouseX = e.data.x;
+                rawMouseY = e.data.y;
+            } else if (e.data && e.data.type === "mouseleave") {
+                rawMouseX = 0;
+                rawMouseY = 0;
+            }
+        });
+
+
+
+
+        if (isMobile) {
+
+            // Zoom camera in 50% closer on mobile for better rotation range
+            camera.position.set(
+                0.544,
+                -0.049,
+                0.350
+            );
+
+            // Portrait screens need more vertical coverage
+            camera.fov = 16;
+            camera.updateProjectionMatrix();
+        }
+
+
+        // ── Gyroscope calibration ─────────────────────────────────────
+        // Stores the "resting" angle so current phone angle = centre
+        let gyroBaseGamma = null;
+        let gyroBaseBeta = null;
+
+        function onGyro(event) {
+
+            let gamma = event.gamma ?? 0; // left/right tilt  -90 → +90
+            let beta = event.beta ?? 0; // forward/back tilt -180 → +180
+
+            // Auto-calibrate on first reading
+            if (gyroBaseGamma === null) {
+                gyroBaseGamma = gamma;
+                gyroBaseBeta = beta;
+                return;
+            }
+
+            // Delta from calibrated centre, clamped to ±30°
+            const dG = Math.max(-30, Math.min(30, gamma - gyroBaseGamma));
+            const dB = Math.max(-30, Math.min(30, beta - gyroBaseBeta));
+
+            // Map ±30° → ±1 and feed into the shared parallax variables
+            rawMouseX = dG / 30;
+            rawMouseY = -dB / 30; // negate: tilt forward = look up
+        }
+
+
+        // ── iOS 13+ requires a user-gesture permission request ────────
+        if (isMobile) {
+
+            if (
+                typeof DeviceOrientationEvent !== "undefined" &&
+                typeof DeviceOrientationEvent.requestPermission === "function"
+            ) {
+                // iOS — show permission button
+                const gyroBtn = document.createElement("button");
+                gyroBtn.id = "gyro-btn";
+                gyroBtn.textContent = "🔄  Enable Gyroscope";
+                gyroBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 32px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 999;
+                    padding: 13px 28px;
+                    background: rgba(255,255,255,0.12);
+                    color: #fff;
+                    border: 1px solid rgba(255,255,255,0.25);
+                    border-radius: 999px;
+                    font-size: 15px;
+                    font-family: inherit;
+                    letter-spacing: 0.03em;
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    cursor: pointer;
+                    box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+                `;
+                document.body.appendChild(gyroBtn);
+
+                gyroBtn.addEventListener("click", () => {
+
+                    DeviceOrientationEvent.requestPermission()
+                        .then((state) => {
+                            if (state === "granted") {
+                                window.addEventListener(
+                                    "deviceorientation",
+                                    onGyro
+                                );
+                                gyroBtn.style.opacity = "0";
+                                gyroBtn.style.transition = "opacity 0.5s";
+                                setTimeout(() => gyroBtn.remove(), 600);
+                            }
+                        })
+                        .catch(console.error);
+                });
+
+            } else {
+
+                // Android + other browsers — no permission needed
+                window.addEventListener("deviceorientation", onGyro);
+            }
+        }
+
+
+
+
+        // ============================================================
+        // RENDER LOOP
+        // ============================================================
+
+        function animate() {
+
+            requestAnimationFrame(
+                animate
+            );
+
+
+            const delta =
+                clock.getDelta();
+
+
+            // GLB animations — always playing at speed 0.2
+            if (mixer) {
+
+                mixer.update(delta * 0.2);
+            }
+
+
+            // Camera-space parallax — offsets look-at along camera's own
+            // right and up axes so movement is ALWAYS straight (no diagonal)
+            camera.getWorldDirection(_camFwd);
+            _camRight.crossVectors(_camFwd, camera.up).normalize();
+            _camUp.crossVectors(_camRight, _camFwd).normalize();
+
+            _targetLook
+                .copy(BASE_LOOK)
+                .addScaledVector(_camRight, rawMouseX * PARALLAX_H)
+                .addScaledVector(_camUp, -rawMouseY * PARALLAX_V);
+
+            currentLook.lerp(_targetLook, PARALLAX_EASE);
+            camera.lookAt(currentLook);
+
+            composer.render();
+        }
+
+
+        animate();
+
+
+        // ============================================================
+        // WINDOW RESIZE
+        // ============================================================
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                camera.aspect =
+                    window.innerWidth /
+                    window.innerHeight;
+
+                camera.updateProjectionMatrix();
+
+
+                renderer.setSize(
+                    window.innerWidth,
+                    window.innerHeight
+                );
+
+
+                composer.setSize(
+                    window.innerWidth,
+                    window.innerHeight
+                );
+            }
+        );
+
+
+
+
+    </script>
+
+</body>
+
+</html>
